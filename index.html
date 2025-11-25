@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Offline Video Player</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar" aria-label="Playlist">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+          "
+        >
+          <h3>Saved Videos</h3>
+          <button id="uploadMore" class="upload-small">Upload</button>
+        </div>
+
+        <div id="playlist" class="playlist" tabindex="0"></div>
+
+        <div class="controls-row">
+          <div class="toggle" title="Autoplay next">
+            <input id="autoplay" type="checkbox" />
+            <label for="autoplay" class="small">Autoplay</label>
+          </div>
+          <div class="toggle" title="Shuffle playlist">
+            <input id="shuffle" type="checkbox" />
+            <label for="shuffle" class="small">Shuffle</label>
+          </div>
+          <button
+            id="clearAll"
+            class="icon-btn"
+            title="Delete all saved videos"
+          >
+            Clear
+          </button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="first-screen" id="firstScreen">
+          <div style="text-align: center">
+            <h1 style="margin: 0 0 6px 0">Offline Video Player</h1>
+            <p class="small" style="margin: 0 0 12px 0">
+              Upload a video to start. Files are stored in your browser.
+            </p>
+            <button id="uploadMain" class="upload-btn">Upload a Video</button>
+          </div>
+        </div>
+
+        <section class="player-wrap" id="playerWrap" aria-live="polite">
+          <video id="player" class="fade"></video>
+
+          <div class="controls" id="controls">
+            <button class="btn" id="prev" title="Previous video (P)">⏮</button>
+            <button class="btn" id="rew" title="Rewind 10 sec (J)">⏪</button>
+            <button class="btn" id="play" title="Play / Pause (Space / K)">
+              ▶
+            </button>
+            <button class="btn" id="fwd" title="Forward 10 sec (L)">⏩</button>
+            <button class="btn" id="next" title="Next video (N)">⏭</button>
+
+            <input
+              id="progress"
+              class="progress"
+              type="range"
+              min="0"
+              value="0"
+              title="Seek"
+            />
+            <button class="btn" id="volBtn" title="Mute / Unmute (M)">
+              🔊
+            </button>
+            <input
+              id="vol"
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              style="width: 110px"
+              title="Volume (↑ ↓)"
+            />
+            <select
+              id="rate"
+              style="
+                padding: 8px;
+                border-radius: 6px;
+                background: #222;
+                color: #fff;
+              "
+              title="Playback speed (< >)"
+            >
+              <option value="0.5">0.5x</option>
+              <option value="0.75">0.75x</option>
+              <option value="1" selected>1x</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2x</option>
+            </select>
+
+            <div style="margin-left: 6px; display: flex; gap: 6px">
+              <button id="stop" class="btn" title="Go back to start">⏹</button>
+              <button id="pip" class="btn" title="Picture-in-Picture">
+                PIP
+              </button>
+              <button id="fs" class="btn" title="Fullscreen (F)">⛶</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Hidden file inputs -->
+    <input id="fileMain" type="file" accept="video/*" style="display: none" />
+    <input id="fileMore" type="file" accept="video/*" style="display: none" />
+    <script src="script.js "></script>
+  </body>
+</html>
