@@ -7,6 +7,28 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <!-- Theme toggle button -->
+    <button id="themeToggle" class="theme-toggle" type="button">
+      <span id="themeIcon">🌙</span> <span id="themeLabel">Dark mode</span>
+    </button>
+    <div id="skipNotification" class="skip-notification"></div>
+    <!-- Custom Modal/Message Box UI -->
+    <div id="modalBackdrop" class="modal-backdrop">
+      <div class="modal-content">
+        <p id="modalMessage"></p>
+        <div class="modal-buttons" id="modalButtons"></div>
+      </div>
+    </div>
+
+    <!-- Drag and Drop Overlay -->
+    <div class="drag-overlay" id="dragOverlay">
+      <div class="drag-message">
+        <span style="font-size: 4rem">📥</span>
+        <h2>Drop Video File Here</h2>
+        <p class="small">It will be saved locally in your browser.</p>
+      </div>
+    </div>
+
     <div class="app">
       <aside class="sidebar" aria-label="Playlist">
         <div
@@ -28,6 +50,10 @@
             <input id="autoplay" type="checkbox" />
             <label for="autoplay" class="small">Autoplay</label>
           </div>
+          <div class="toggle" title="Loop current video">
+            <input id="loop" type="checkbox" />
+            <label for="loop" class="small">Loop</label>
+          </div>
           <div class="toggle" title="Shuffle playlist">
             <input id="shuffle" type="checkbox" />
             <label for="shuffle" class="small">Shuffle</label>
@@ -37,7 +63,7 @@
             class="icon-btn"
             title="Delete all saved videos"
           >
-            Clear
+            Clear All
           </button>
         </div>
       </aside>
@@ -47,7 +73,8 @@
           <div style="text-align: center">
             <h1 style="margin: 0 0 6px 0">Offline Video Player</h1>
             <p class="small" style="margin: 0 0 12px 0">
-              Upload a video to start. Files are stored in your browser.
+              Upload or drag & drop a video to start. Files are stored in your
+              browser.
             </p>
             <button id="uploadMain" class="upload-btn">Upload a Video</button>
           </div>
@@ -55,6 +82,7 @@
 
         <section class="player-wrap" id="playerWrap" aria-live="polite">
           <video id="player" class="fade"></video>
+          <div id="playPauseOverlay" class="play-pause-overlay">▶</div>
 
           <div class="controls" id="controls">
             <button class="btn" id="prev" title="Previous video (P)">⏮</button>
@@ -72,7 +100,13 @@
               min="0"
               value="0"
               title="Seek"
-            />
+            /><span
+              id="timeDisplay"
+              class="small"
+              style="min-width: 80px; text-align: center"
+              >0:00 / 0:00</span
+            >
+
             <button class="btn" id="volBtn" title="Mute / Unmute (M)">
               🔊
             </button>
@@ -97,7 +131,7 @@
             >
               <option value="0.5">0.5x</option>
               <option value="0.75">0.75x</option>
-              <option value="1" selected>1x</option>
+              <option value="1">1x</option>
               <option value="1.25">1.25x</option>
               <option value="1.5">1.5x</option>
               <option value="2">2x</option>
@@ -118,6 +152,6 @@
     <!-- Hidden file inputs -->
     <input id="fileMain" type="file" accept="video/*" style="display: none" />
     <input id="fileMore" type="file" accept="video/*" style="display: none" />
-    <script src="script.js "></script>
+    <script src="script.js"></script>
   </body>
 </html>
