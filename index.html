@@ -81,9 +81,10 @@
         </div>
 
         <section class="player-wrap" id="playerWrap" aria-live="polite">
-          <video id="player" class="fade"></video>
-          <div id="playPauseOverlay" class="play-pause-overlay">▶</div>
-
+          <div class="video-shell">
+            <video id="player" class="fade"></video>
+            <div id="playPauseOverlay" class="play-pause-overlay">▶</div>
+          </div>
           <div class="controls" id="controls">
             <button class="btn" id="prev" title="Previous video (P)">⏮</button>
             <button class="btn" id="rew" title="Rewind 10 sec (J)">⏪</button>

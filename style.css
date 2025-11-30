@@ -417,6 +417,16 @@ body.light .play-pause-overlay:hover {
   background: rgba(0, 0, 0, 0.3);
   border-color: rgba(0, 0, 0, 0.6);
 }
+.video-shell {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.video-shell video {
+  display: block;
+  width: 100%;
+}
 
 @media (max-width: 900px) {
   .app {
