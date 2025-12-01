@@ -62,12 +62,15 @@
        * Initializes IndexedDB database and creates video store
        * @returns {Promise<IDBDatabase>} Database connection
        */
+      // Open DB and create store with 'name' as keyPath
       function openDB() {
         return new Promise((resolve, reject) => {
-          const request = indexedDB.open(DB_NAME);
+          const request = indexedDB.open(DB_NAME, 2);
           request.onupgradeneeded = () => {
             const db = request.result;
-            db.createObjectStore(STORE, { keyPath: "name" });
+            if (!db.objectStoreNames.contains(STORE)) {
+              db.createObjectStore(STORE, { keyPath: "name" }); // <--- use name as key
+            }
           };
           request.onsuccess = () => {
             db = request.result;
@@ -77,47 +80,75 @@
         });
       }
 
-      /**
-       * Saves video file/blob to IndexedDB
-       * @param {File|Blob} file - Video file to store
-       * @returns {Promise<void>}
-       */
-      function putVideo(file) {
+      // Save video to IndexedDB
+      async function putVideo(file) {
         return new Promise((resolve, reject) => {
-          const transaction = db.transaction(STORE, "readwrite");
-          const store = transaction.objectStore(STORE);
-          store.put({ name: file.name, blob: file, created: Date.now() });
-          transaction.oncomplete = () => resolve();
-          transaction.onerror = () => reject(transaction.error);
+          const tx = db.transaction(STORE, "readwrite");
+          const store = tx.objectStore(STORE);
+
+          const rec = {
+            name: file.name, // <--- key is name
+            blob: file,
+            created: Date.now(),
+            lastPosition: 0,
+            playbackState: "paused",
+            lastUpdated: Date.now(),
+          };
+
+          store.put(rec); // put will replace if name exists
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
         });
       }
 
+      // Get video by name
+      function getVideo(name) {
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE, "readonly");
+          const store = tx.objectStore(STORE);
+          const request = store.get(name); // now works because name is key
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
       /**
-       * Retrieves all stored videos from IndexedDB
+       * Retrieves all videos from IndexedDB
        * @returns {Promise<Array>} Array of video records
        */
       function getAllVideos() {
         return new Promise((resolve, reject) => {
-          const transaction = db.transaction(STORE, "readonly");
-          const store = transaction.objectStore(STORE);
-          const request = store.getAll();
+          const tx = db.transaction(STORE, "readonly");
+          const store = tx.objectStore(STORE);
+          const request = store.getAll(); // fetch all records
           request.onsuccess = () => resolve(request.result || []);
           request.onerror = () => reject(request.error);
         });
       }
 
       /**
-       * Gets single video record by name
-       * @param {string} name - Video name/key
-       * @returns {Promise<Object|null>} Video record or null
+       * Updates video record's metadata by merging with existing record.
+       * Used to save lastPosition and playbackState without touching blob.
+       * @param {string} name - Video name
+       * @param {Object} updates - metadata fields to update (lastPosition, playbackState, lastUpdated)
+       * @returns {Promise<void>}
        */
-      function getVideo(name) {
+      /**
+       * Updates video record's metadata (lastPosition, playbackState)
+       * @param {string} name - Video name
+       * @param {Object} updates - { lastPosition, playbackState }
+       */
+      async function saveVideoMeta(name, updates) {
+        const rec = await getVideo(name);
+        if (!rec) return; // record missing, skip
+
+        const merged = { ...rec, ...updates, lastUpdated: Date.now() };
+
         return new Promise((resolve, reject) => {
-          const transaction = db.transaction(STORE, "readonly");
-          const store = transaction.objectStore(STORE);
-          const request = store.get(name);
-          request.onsuccess = () => resolve(request.result);
-          request.onerror = () => reject(request.error);
+          const tx = db.transaction(STORE, "readwrite");
+          const store = tx.objectStore(STORE);
+          store.put(merged);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
         });
       }
 
@@ -126,10 +157,11 @@
        * @param {string} name - Video name to delete
        * @returns {Promise<void>}
        */
+      // Delete video by name
       function deleteVideo(name) {
         return new Promise((resolve, reject) => {
-          const transaction = db.transaction(STORE, "readwrite");
-          const store = transaction.objectStore(STORE);
+          const tx = db.transaction(STORE, "readwrite");
+          const store = tx.objectStore(STORE);
           const request = store.delete(name);
           request.onsuccess = () => resolve();
           request.onerror = () => reject(request.error);
@@ -273,13 +305,13 @@
         player.playbackRate = currentRate;
         rateEl.value = String(currentRate);
       })();
-    
+
       /**
        * Refreshes video playlist from IndexedDB and updates UI
        */
       async function refreshList() {
         list = await getAllVideos();
-        list.sort((a, b) => b.created - a.created); // Newest first
+        list.sort((a, b) => b.created - a.created); // newest first
         order = list.map((i) => i.name);
         renderPlaylist();
       }
@@ -339,11 +371,64 @@
         });
       }
 
+      // --- Timestamp / Position restore logic ---
+      // We'll throttle writes to IndexedDB while the video is playing.
+      let saveTimeout = null;
+      let lastSavedTime = 0;
+
+      /**
+       * Schedule a metadata save for the currently playing video (throttled)
+       * @param {number} position - currentTime to save
+       * @param {"playing"|"paused"} state - playback state
+       */
+      function scheduleSaveCurrentMeta(position, state) {
+        if (current < 0 || !order[current]) return;
+        const name = order[current];
+
+        // Throttle: only save every 1000ms (or if immediate flag set)
+        const now = Date.now();
+        if (now - lastSavedTime > 1000) {
+          // immediate save
+          lastSavedTime = now;
+          saveVideoMeta(name, {
+            lastPosition: position,
+            playbackState: state,
+          }).catch((e) => console.error("saveVideoMeta error:", e));
+        } else {
+          // schedule delayed save (reset previous)
+          if (saveTimeout) clearTimeout(saveTimeout);
+          saveTimeout = setTimeout(() => {
+            lastSavedTime = Date.now();
+            saveVideoMeta(name, {
+              lastPosition: position,
+              playbackState: state,
+            }).catch((e) => console.error("saveVideoMeta error:", e));
+            saveTimeout = null;
+          }, 700);
+        }
+      }
+
+      // Save immediately (used on pause / beforeunload / switching)
+      async function saveCurrentMetaImmediate() {
+        if (current < 0 || !order[current]) return;
+        const name = order[current];
+        try {
+          await saveVideoMeta(name, {
+            lastPosition: player.currentTime || 0,
+            playbackState: player.paused ? "paused" : "playing",
+          });
+        } catch (e) {
+          console.error("saveCurrentMetaImmediate error:", e);
+        }
+      }
+
       /**
        * Plays video by name from playlist
        * @param {string} name - Video name to play
        */
       async function playByName(name) {
+        await saveCurrentMetaImmediate(); // save previous
+
         stopAndClear();
 
         firstScreen.style.display = "none";
@@ -351,7 +436,6 @@
         controls.style.display = "flex";
 
         current = order.indexOf(name);
-
         const rec = await getVideo(name);
         if (!rec) {
           await showMessageBox("Video not found in local storage.");
@@ -359,54 +443,84 @@
         }
 
         currentURL = URL.createObjectURL(rec.blob);
-        player.classList.add("hide");
         player.src = currentURL;
         player.load();
 
-        player.onloadedmetadata = () => {
+        player.onloadedmetadata = async () => {
           player.playbackRate = currentRate;
           rateEl.value = String(currentRate);
 
-          // Restore saved playback position
-          const saved = localStorage.getItem("pos_" + name);
-          if (saved) player.currentTime = Number(saved);
+          // Restore saved position and state
+          if (rec.lastPosition && rec.lastPosition < player.duration) {
+            player.currentTime = rec.lastPosition;
+          } else {
+            player.currentTime = 0;
+          }
 
-          player.classList.remove("hide");
-          player.play();
-          playBtn.textContent = "⏸";
+          // Update time display immediately
+          if (timeDisplay) {
+            timeDisplay.textContent = `${formatTime(
+              player.currentTime
+            )} / ${formatTime(player.duration)}`;
+          }
+
+          if (rec.playbackState === "playing") {
+            try {
+              await player.play();
+              playBtn.textContent = "⏸";
+            } catch {
+              playBtn.textContent = "▶";
+            }
+          } else {
+            playBtn.textContent = "▶";
+          }
+
           updatePlayPauseOverlay();
           updatePlaylistHighlight();
         };
 
         player.onended = () => {
+          saveVideoMeta(name, { lastPosition: 0, playbackState: "paused" });
           if (loopEl.checked) {
             player.currentTime = 0;
             player.play();
-          } else if (autoplayEl.checked) {
-            playNext();
-          }
+          } else if (autoplayEl.checked) playNext();
+          else playBtn.textContent = "▶";
         };
+        const timeDisplay = document.getElementById("timeDisplay"); // create or select this
 
-        const timeDisplay = document.getElementById("timeDisplay");
-
+        function formatTime(sec) {
+          const m = Math.floor(sec / 60)
+            .toString()
+            .padStart(2, "0");
+          const s = Math.floor(sec % 60)
+            .toString()
+            .padStart(2, "0");
+          return `${m}:${s}`;
+        }
         player.ontimeupdate = () => {
-          if (player.duration && !isNaN(player.duration)) {
-            progressEl.max = player.duration;
-            progressEl.value = player.currentTime;
-
-            const formatTime = (seconds) => {
-              const m = Math.floor(seconds / 60);
-              const s = Math.floor(seconds % 60);
-              return `${m}:${s < 10 ? "0" : ""}${s}`;
-            };
-
+          progressEl.max = player.duration || 0;
+          progressEl.value = player.currentTime;
+          if (timeDisplay) {
             timeDisplay.textContent = `${formatTime(
               player.currentTime
-            )} / ${formatTime(player.duration)}`;
+            )} / ${formatTime(player.duration || 0)}`;
           }
-          if (current >= 0) {
-            localStorage.setItem("pos_" + order[current], player.currentTime);
-          }
+          scheduleSaveCurrentMeta(
+            player.currentTime,
+            player.paused ? "paused" : "playing"
+          );
+        };
+
+        player.onplay = () => {
+          playBtn.textContent = "⏸";
+          updatePlayPauseOverlay();
+          scheduleSaveCurrentMeta(player.currentTime, "playing");
+        };
+        player.onpause = () => {
+          playBtn.textContent = "▶";
+          updatePlayPauseOverlay();
+          saveCurrentMetaImmediate();
         };
       }
 
@@ -430,7 +544,7 @@
       /**
        * Plays next video in playlist (supports shuffle)
        */
-      function playNext() {
+      async function playNext() {
         if (order.length === 0) return;
         if (shuffleEl.checked) {
           let idx = current;
@@ -442,13 +556,21 @@
         } else {
           current = (current + 1) % order.length;
         }
-        playByName(order[current]);
+        await playByName(order[current]);
+        // Force autoplay if toggle is checked
+        if (autoplayEl.checked) {
+          try {
+            await player.play();
+            playBtn.textContent = "⏸";
+            updatePlayPauseOverlay();
+          } catch {}
+        }
       }
 
       /**
        * Plays previous video in playlist (supports shuffle)
        */
-      function playPrev() {
+      async function playPrev() {
         if (order.length === 0) return;
         if (shuffleEl.checked) {
           let idx = current;
@@ -461,6 +583,14 @@
           current = (current - 1 + order.length) % order.length;
         }
         playByName(order[current]);
+        // Force autoplay if toggle is checked
+        if (autoplayEl.checked) {
+          try {
+            await player.play();
+            playBtn.textContent = "⏸";
+            updatePlayPauseOverlay();
+          } catch {}
+        }
       }
 
       /**
@@ -489,6 +619,11 @@
         const skipAmount = 10;
         player.currentTime = Math.max(0, player.currentTime - skipAmount);
         showSkipNotification(`- ${skipAmount}s`);
+        // save soon after skip
+        scheduleSaveCurrentMeta(
+          player.currentTime,
+          player.paused ? "paused" : "playing"
+        );
       };
 
       fwdBtn.onclick = () => {
@@ -498,6 +633,10 @@
           player.currentTime + skipAmount
         );
         showSkipNotification(`+ ${skipAmount}s`);
+        scheduleSaveCurrentMeta(
+          player.currentTime,
+          player.paused ? "paused" : "playing"
+        );
       };
 
       prevBtn.onclick = () => playPrev();
@@ -507,10 +646,17 @@
         player.pause();
         player.currentTime = 0;
         playBtn.textContent = "▶";
+        // save immediate
+        saveCurrentMetaImmediate();
       };
 
       progressEl.oninput = () => {
         player.currentTime = Number(progressEl.value);
+        // When user seeks, save metadata after seek
+        scheduleSaveCurrentMeta(
+          player.currentTime,
+          player.paused ? "paused" : "playing"
+        );
       };
 
       volEl.oninput = () => {
@@ -634,7 +780,7 @@
       };
 
       // Keyboard shortcuts for video controls
-      document.addEventListener("keydown", (e) => {
+      document.addEventListener("keydown", async (e) => {
         const tag = document.activeElement.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
@@ -728,16 +874,51 @@
 
         // Navigation
         if (k === "n") {
-          // Next
           e.preventDefault();
-          nextBtn.click();
-        }
-        if (k === "p") {
-          // Previous
-          e.preventDefault();
-          prevBtn.click();
-        }
+          if (order.length === 0) return;
 
+          // Save current video metadata and stop
+          await saveCurrentMetaImmediate();
+          stopAndClear();
+
+          // Move to next
+          if (shuffleEl.checked) {
+            let idx = current;
+            if (order.length > 1) {
+              while (idx === current)
+                idx = Math.floor(Math.random() * order.length);
+            } else idx = 0;
+            current = idx;
+          } else {
+            current = (current + 1) % order.length;
+          }
+
+          playByName(order[current]);
+          return;
+        }
+        // Previous video (P)
+
+        if (k === "p") {
+          e.preventDefault();
+          if (order.length === 0) return;
+
+          await saveCurrentMetaImmediate();
+          stopAndClear();
+
+          if (shuffleEl.checked) {
+            let idx = current;
+            if (order.length > 1) {
+              while (idx === current)
+                idx = Math.floor(Math.random() * order.length);
+            } else idx = 0;
+            current = idx;
+          } else {
+            current = (current - 1 + order.length) % order.length;
+          }
+
+          playByName(order[current]);
+          return;
+        }
         // Playback speed (<, >)
         if (e.key === "<") {
           const newRate = Math.max(0.5, currentRate - 0.25);
@@ -777,10 +958,16 @@
         }
       });
 
-      // Persist settings before page unload
-      window.addEventListener("beforeunload", () => {
+      // Persist settings and save metadata before page unload
+      window.addEventListener("beforeunload", (e) => {
         localStorage.setItem("vol", volEl.value);
         localStorage.setItem("rate", String(currentRate));
+        // Save current video metadata synchronously (attempt)
+        // Note: IndexedDB is async; best-effort save (we call immediate save).
+        // Browsers may still not complete async writes on unload, but this helps.
+        navigator.sendBeacon; // no-op placeholder
+        // Call immediate save (async) — it's best-effort
+        saveCurrentMetaImmediate();
       });
 
       // Register service worker for offline support (if available)
