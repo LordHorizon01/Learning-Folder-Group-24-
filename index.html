@@ -43,6 +43,7 @@
             gap: 8px;
           ">
           <h3>Saved Videos</h3>
+          <!-- Button used to trigger the file input -->
           <button id="uploadMore" class="upload-small">Upload</button>
         </div>
 
@@ -81,6 +82,7 @@
               Upload or drag & drop a video to start. Files are stored in your
               browser.
             </p>
+            <!-- Button used to trigger the file input -->
             <button id="uploadMain" class="upload-btn">Upload a Video</button>
           </div>
         </div>
@@ -136,7 +138,9 @@
     </div>
 
     <!-- Hidden file inputs -->
+     <!-- Big Upload button on first screen -->
     <input id="fileMain" type="file" accept="video/*" style="display: none" />
+      <!-- Small upload button in Playlist section in SideBar -->
     <input id="fileMore" type="file" accept="video/*" style="display: none" />
 
     <script src="script.js"></script>

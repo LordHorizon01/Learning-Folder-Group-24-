@@ -129,9 +129,9 @@
         const merged = { ...rec, ...updates, lastUpdated: Date.now() };
 
         return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE, "readwrite");
+          const tx = db.transaction(STORE, "readwrite");  //Opens a read/write transaction on the store
           const store = tx.objectStore(STORE);
-          store.put(merged);
+          store.put(merged);   //Replaces the old recordd with the updated one
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
         });
@@ -145,24 +145,21 @@
       // Delete video by name
       function deleteVideo(name) {
         return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE, "readwrite");
+          const tx = db.transaction(STORE, "readwrite");   //Opens a read/write transaction on the store
           const store = tx.objectStore(STORE);
-          const request = store.delete(name);
-          request.onsuccess = () => resolve();
+          const request = store.delete(name);  //Issues a delet operation for the record whose key matches with the provided name
+          request.onsuccess = () => resolve();  //Resolves the promise when the deletion completes
           request.onerror = () => reject(request.error);
         });
       }
 
-      /**
-       * Clears all videos from IndexedDB
-       * @returns {Promise<void>}
-       */
+      //Delete all video records from IndexedDB object store in one go
       function clearAll() {
         return new Promise((resolve, reject) => {
-          const transaction = db.transaction(STORE, "readwrite");
+          const transaction = db.transaction(STORE, "readwrite");  //Opens a read/write transaction on the store
           const store = transaction.objectStore(STORE);
-          const request = store.clear();
-          request.onsuccess = () => resolve();
+          const request = store.clear();  //Removes all video records from store at once
+          request.onsuccess = () => resolve();  //Resolves the promise once teh clear operation is successful
           request.onerror = () => reject(request.error);
         });
       }
@@ -200,9 +197,9 @@
       const skipNotification = document.getElementById("skipNotification");
       const playPauseOverlay = document.getElementById("playPauseOverlay");
 
-      /**
-       * Updates play/pause overlay visibility and icon
-       */
+      
+      
+      // Updates play/pause overlay visibility and icon 
       function updatePlayPauseOverlay() {
         if (player.paused) {
           playPauseOverlay.textContent = "▶";
@@ -223,13 +220,10 @@
         updatePlayPauseOverlay();
       });
 
-      /**
-       * Shows temporary skip notification (rewind/fast-forward feedback)
-       * @param {string} text - Notification text
-       * @param {number} [duration=800] - Display duration in ms
-       */
+      // Shows temporary skip notification (rewind/fast-forward feedback)
+      // Here text shows the skip message , and duration tells for much time that message will be displayed 
       function showSkipNotification(text, duration = 800) {
-        skipNotification.textContent = text;
+        skipNotification.textContent = text; //Sets the notification element’s text to the provided message
         skipNotification.classList.add("show");
         setTimeout(() => {
           skipNotification.classList.remove("show");
@@ -244,23 +238,21 @@
       let currentRate = Number(localStorage.getItem("rate")) || 1;
 
       // Theme management with localStorage persistence
-      const savedTheme = localStorage.getItem("theme");
+      const savedTheme = localStorage.getItem("theme"); //- Reads the saved theme preference from the browser’s local storage.
       if (savedTheme === "light") {
         document.body.classList.add("light");
         themeIcon.textContent = "☀️";
         themeLabel.textContent = "Light mode";
       }
 
-      const savedLoop = localStorage.getItem("loop");
-      loopEl.checked = savedLoop === "true";
+      const savedLoop = localStorage.getItem("loop");  //- Reads the saved loop preference (whether looping is enabled) from local storage.
+      loopEl.checked = savedLoop === "true";  //- Sets the loop checkbox based on the saved value i.e. - If the stored value is "true", the checkbox is checked; otherwise, it’s unchecked.
 
       loopEl.onchange = () => {
-        localStorage.setItem("loop", loopEl.checked);
+        localStorage.setItem("loop", loopEl.checked);  // Adds an event listener to the loop toggle.Whenever the user changes the loop setting, the new value (true or false) is saved back into local storage.
       };
 
-      /**
-       * Toggles between light/dark theme and persists choice
-       */
+      // Toggles between light/dark theme and persists choice
       function toggleTheme() {
         const isLight = document.body.classList.toggle("light");
         if (isLight) {
@@ -273,32 +265,32 @@
           localStorage.setItem("theme", "dark");
         }
       }
-      themeToggle.addEventListener("click", toggleTheme);
+      themeToggle.addEventListener("click", toggleTheme); //Attaches the toggleTheme function to the theme toggle button (themeToggle)
 
       // Application initialization
-      (async function init() {
+      //Immediately Invoked Function Expression (IIFE).
+      (async function init() { 
         await openDB();
         await refreshList();
 
         // Restore user preferences
-        const savedVol = localStorage.getItem("vol");
+        const savedVol = localStorage.getItem("vol"); // Reads the saved volume from localStorage.
+
         volEl.value = savedVol !== null ? savedVol : 0.8;
         player.volume = Number(volEl.value);
 
-        const savedRate = localStorage.getItem("rate");
+        const savedRate = localStorage.getItem("rate"); // Reads the saved playback speed rate fro localstorage
         currentRate = savedRate ? Number(savedRate) : 1;
         player.playbackRate = currentRate;
         rateEl.value = String(currentRate);
       })();
 
-      /**
-       * Refreshes video playlist from IndexedDB and updates UI
-       */
+      // Refreshes video playlist from IndexedDB and updates UI
       async function refreshList() {
-        list = await getAllVideos();
-        list.sort((a, b) => b.created - a.created); // newest first
-        order = list.map((i) => i.name);
-        renderPlaylist();
+        list = await getAllVideos();  //Calls getAllVideos() , and stores the result in list, which represents all videos currently saved.
+        list.sort((a, b) => b.created - a.created); // Sorts the list so the newest videos appears first. Uses the created timestamp property from each record.
+        order = list.map((i) => i.name);  //Extracts just the name of each video into a new array called order.
+        renderPlaylist();  //function that updates the visible playlist 
       }
 
       /**
@@ -306,7 +298,8 @@
        */
       function renderPlaylist() {
         playlistEl.innerHTML = "";
-        order.forEach((name) => {
+        order.forEach((name) => {    //Iterates over each video name in the "order" array. Each iteration builds a new playlist row.
+          row.className = "pl-item"; //- Creates a <div> element for the playlist item.
           const row = document.createElement("div");
           row.className = "pl-item";
           if (name === order[current]) row.classList.add("playing");
@@ -321,7 +314,7 @@
           // Play button
           const playBtnSmall = document.createElement("button");
           playBtnSmall.className = "icon-btn";
-          playBtnSmall.title = "Play";
+          playBtnSmall.title = "Play";    
           playBtnSmall.textContent = "▶";
           playBtnSmall.onclick = (ev) => {
             ev.stopPropagation();
@@ -359,14 +352,11 @@
       // --- Timestamp / Position restore logic ---
       // We'll throttle writes to IndexedDB while the video is playing.
       let saveTimeout = null;
-      let lastSavedTime = 0;
+      let lastSavedTime = 0; //Tracks the last time metadata was saved,to enforce  throttling
 
-      /**
-       * Schedule a metadata save for the currently playing video (throttled)
-       * @param {number} position - currentTime to save
-       * @param {"playing"|"paused"} state - playback state
-       */
-      function scheduleSaveCurrentMeta(position, state) {
+      //Schedule a metadata save for the currently playing video (throttled)
+
+      function scheduleSaveCurrentMeta(position, state) {  // Saves the current playback position and state, but throttled to avoid excessive writes.
         if (current < 0 || !order[current]) return;
         const name = order[current];
 
@@ -407,10 +397,7 @@
         }
       }
 
-      /**
-       * Plays video by name from playlist
-       * @param {string} name - Video name to play
-       */
+      // Plays video by name from playlist
       async function playByName(name) {
         await saveCurrentMetaImmediate(); // save previous
 
@@ -508,10 +495,8 @@
           saveCurrentMetaImmediate();
         };
       }
-
-      /**
-       * Stops current video and cleans up blob URL
-       */
+      
+      //Stops current video and cleans up blob URL
       function stopAndClear() {
         try {
           player.pause();
@@ -526,9 +511,7 @@
         }
       }
 
-      /**
-       * Plays next video in playlist (supports shuffle)
-       */
+      //Plays next video in playlist (supports shuffle)
       async function playNext() {
         if (order.length === 0) return;
         if (shuffleEl.checked) {
@@ -552,9 +535,7 @@
         }
       }
 
-      /**
-       * Plays previous video in playlist (supports shuffle)
-       */
+      //Plays previous video in playlist (supports shuffle)
       async function playPrev() {
         if (order.length === 0) return;
         if (shuffleEl.checked) {
@@ -578,9 +559,7 @@
         }
       }
 
-      /**
-       * Updates currently playing item highlight in playlist
-       */
+      //Updates currently playing item highlight in playlist
       function updatePlaylistHighlight() {
         const items = Array.from(playlistEl.children);
         items.forEach((el, i) => {
@@ -698,10 +677,7 @@
       fileMain.onchange = handleFileEvent;
       fileMore.onchange = handleFileEvent;
 
-      /**
-       * Handles file input changes and drag-drop events
-       * @param {Event} e - File input or drop event
-       */
+      //Handles file input changes and drag-drop events
       async function handleFileEvent(e) {
         const files = e.target ? e.target.files : e.files;
         if (!files || files.length === 0) return;
