@@ -298,8 +298,7 @@
        */
       function renderPlaylist() {
         playlistEl.innerHTML = "";
-        order.forEach((name) => {    //Iterates over each video name in the "order" array. Each iteration builds a new playlist row.
-          row.className = "pl-item"; //- Creates a <div> element for the playlist item.
+        order.forEach((name) => {
           const row = document.createElement("div");
           row.className = "pl-item";
           if (name === order[current]) row.classList.add("playing");
