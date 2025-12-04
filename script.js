@@ -8,6 +8,8 @@
        * @param {string} message - Text to display
        * @returns {Promise<void>} Resolves when OK is clicked
        */
+
+      // Displays a dialogue box , showing message that files other than videos cannot be uploaded
       function showMessageBox(message) {
         return new Promise((resolve) => {
           modalMessage.textContent = message;
@@ -29,6 +31,9 @@
        * @param {string} [cancelText="Cancel"] - Cancel button text
        * @returns {Promise<boolean>} true if confirmed, false if cancelled
        */
+
+      /*Displays a dialogue box with message to delete video user wants to
+       delete or deleting all videos from Saved videos list and along two buttons Confirm and Cancel*/
       function showConfirmBox(
         message,
         confirmText = "Confirm",
@@ -38,8 +43,7 @@
           modalMessage.textContent = message;
           modalButtons.innerHTML = `
       <button class="modal-btn btn-danger" id="modalConfirm">${confirmText}</button>
-      <button class="modal-btn btn-secondary" id="modalCancel">${cancelText}</button>
-    `;
+      <button class="modal-btn btn-secondary" id="modalCancel">${cancelText}</button>`;
           modalBackdrop.classList.add("show");
 
           document.getElementById("modalConfirm").onclick = () => {

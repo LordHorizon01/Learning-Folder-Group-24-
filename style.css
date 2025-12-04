@@ -1,3 +1,4 @@
+      /* Root Variables */
       :root {
         --bg: #0f1113;
         --panel: #16181b;
@@ -7,7 +8,8 @@
         --card: #1b1d20;
         --error: #e53e3e;
         --text: #eef2f5;
-      } /* Light theme overrides */
+      } 
+      /* Light theme root variable overwriting */
       body.light {
         --bg: #f5f7fb;
         --panel: #ffffff;
@@ -26,6 +28,7 @@
         background: var(--bg);
         color: var(--text);
       }
+      /* Main app layout Container */
       .app {
         display: flex;
         height: 100vh;
@@ -56,6 +59,7 @@
         font-size: 16px;
       }
 
+      /* Drag and Drop Overlay */
       .drag-overlay {
         position: fixed;
         top: 0;
@@ -92,6 +96,7 @@
         margin-top: 0;
       }
 
+      /* Sidebar(Playlist section) */
       .sidebar {
         width: 260px;
         background: var(--panel);
@@ -102,6 +107,8 @@
         box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
         overflow: hidden;
       }
+
+      /* Sidebar heading */
       .sidebar h3 {
         margin: 0 0 6px 0;
         font-size: 16px;
@@ -175,6 +182,7 @@
         margin-top: 8px;
       }
 
+      /* Main video player layout */
       .main {
         flex: 1;
         display: flex;
@@ -183,12 +191,14 @@
         align-items: center;
         overflow: auto;
       }
+      /* First screen appearance */
       .first-screen {
         flex: 1;
         display: flex;
         align-items: center;
         justify-content: center;
       }
+      /* Upload button */
       .upload-btn {
         background: var(--accent);
         border: none;
@@ -202,6 +212,8 @@
       .upload-btn:hover {
         background: var(--accent-dark);
       }
+
+      /* Upload button in SideBar */
       .upload-small {
         background: transparent;
         border: 1px solid rgba(255, 255, 255, 0.06);
@@ -220,7 +232,7 @@
       body.light .upload-small:hover {
         background: rgba(0, 0, 0, 0.04);
       }
-
+      /* Container holding video and controlds */
       .player-wrap {
         width: 88%;
         max-width: 1000px;
@@ -283,6 +295,7 @@
         font-size: 13px;
       }
 
+      /* SideBar Controls  */
       .toggle {
         display: flex;
         align-items: center;
@@ -347,10 +360,12 @@
         color: white;
         border: none;
       }
+
+      /* Skip Notification Box */
       .skip-notification {
         position: fixed;
         top: 50%;
-        left: 50%;
+        left: 59%;
         transform: translate(-50%, -50%);
         background: rgba(0, 0, 0, 0.85);
         color: white;
@@ -373,6 +388,8 @@
         background: rgba(255, 255, 255, 0.95);
         color: #111827;
       }
+
+      /* Play-Pause Overlay */
       .play-pause-overlay {
         position: absolute;
         top: 50%;
@@ -417,6 +434,8 @@
         background: rgba(0, 0, 0, 0.3);
         border-color: rgba(0, 0, 0, 0.6);
       }
+
+      /* Video player section */
       .video-shell {
         position: relative;
         width: 100%;

@@ -7,12 +7,13 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
- <!-- Theme toggle button -->
+    <!-- Theme toggle button -->
     <button id="themeToggle" class="theme-toggle" type="button">
       <span id="themeIcon">🌙</span> <span id="themeLabel">Dark mode</span>
     </button>
+    <!--Skip Notification Box -->
     <div id="skipNotification" class="skip-notification"></div>
-    <!-- Custom Modal/Message Box UI -->
+    <!-- Custom Modal/Message Box:-used for delete confirmations. -->
     <div id="modalBackdrop" class="modal-backdrop">
       <div class="modal-content">
         <p id="modalMessage"></p>
@@ -28,47 +29,51 @@
         <p class="small">It will be saved locally in your browser.</p>
       </div>
     </div>
-
+  
+    <!-- App Layout Container -->
     <div class="app">
+      <!-- SideBar (Playlist Section) -->
       <aside class="sidebar" aria-label="Playlist">
+        <!-- Header Row in SideBar -->
         <div
           style="
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 8px;
-          "
-        >
+          ">
           <h3>Saved Videos</h3>
           <button id="uploadMore" class="upload-small">Upload</button>
         </div>
 
+        <!-- Playlist Container-->
         <div id="playlist" class="playlist" tabindex="0"></div>
 
+        <!-- SideBar Controls(AutoPlay, Loop, Shuffle) -->
         <div class="controls-row">
+          <!-- Autoplay -->
           <div class="toggle" title="Autoplay next">
             <input id="autoplay" type="checkbox" />
             <label for="autoplay" class="small">Autoplay</label>
           </div>
+          <!-- Loop -->
           <div class="toggle" title="Loop current video">
             <input id="loop" type="checkbox" />
             <label for="loop" class="small">Loop</label>
           </div>
+          <!-- Shuffle -->
           <div class="toggle" title="Shuffle playlist">
             <input id="shuffle" type="checkbox" />
             <label for="shuffle" class="small">Shuffle</label>
           </div>
-          <button
-            id="clearAll"
-            class="icon-btn"
-            title="Delete all saved videos"
-          >
-            Clear All
-          </button>
+          <!-- Clear All Button -->
+          <button id="clearAll" class="icon-btn" title="Delete all saved videos">Clear All</button>
         </div>
       </aside>
 
+      <!-- Main Player View -->
       <main class="main">
+        <!-- First Screen -->
         <div class="first-screen" id="firstScreen">
           <div style="text-align: center">
             <h1 style="margin: 0 0 6px 0">Offline Video Player</h1>
@@ -80,56 +85,34 @@
           </div>
         </div>
 
+        <!-- Video Player Section -->
         <section class="player-wrap" id="playerWrap" aria-live="polite">
+          <!-- Video container -->
           <div class="video-shell">
             <video id="player" class="fade"></video>
             <div id="playPauseOverlay" class="play-pause-overlay">▶</div>
           </div>
+
+          <!-- Custom Video Controls -->
           <div class="controls" id="controls">
+            <!-- Previous video button -->
             <button class="btn" id="prev" title="Previous video (P)">⏮</button>
+            <!-- Rewind 10sec button -->
             <button class="btn" id="rew" title="Rewind 10 sec (J)">⏪</button>
-            <button class="btn" id="play" title="Play / Pause (Space / K)">
-              ▶
-            </button>
+            <!-- Play/Pause button -->
+            <button class="btn" id="play" title="Play / Pause (Space / K)">▶</button>
+            <!-- Forward/Skip 10sec button -->
             <button class="btn" id="fwd" title="Forward 10 sec (L)">⏩</button>
+            <!-- Next video  button -->
             <button class="btn" id="next" title="Next video (N)">⏭</button>
-
-            <input
-              id="progress"
-              class="progress"
-              type="range"
-              min="0"
-              value="0"
-              title="Seek"
-            /><span
-              id="timeDisplay"
-              class="small"
-              style="min-width: 80px; text-align: center"
-              >0:00 / 0:00</span
-            >
-
-            <button class="btn" id="volBtn" title="Mute / Unmute (M)">
-              🔊
-            </button>
-            <input
-              id="vol"
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              style="width: 110px"
-              title="Volume (↑ ↓)"
-            />
-            <select
-              id="rate"
-              style="
-                padding: 8px;
-                border-radius: 6px;
-                background: #222;
-                color: #fff;
-              "
-              title="Playback speed (< >)"
-            >
+            <!-- Progress Bar -->
+            <input id="progress" class="progress" type="range" min="0" value="0" title="Seek"/><span id="timeDisplay" class="small" style="min-width: 80px; text-align: center">0:00 / 0:00</span>
+            <!-- Mute/Unmute button -->
+            <button class="btn" id="volBtn" title="Mute / Unmute (M)">🔊</button>
+            <!-- Volume Slider control -->
+            <input id="vol" type="range" min="0" max="1" step="0.05" style="width: 110px" title="Volume (↑ ↓)"/>
+            <!-- Playback Speed  controller Dropdown -->
+            <select id="rate" style="padding: 8px; border-radius: 6px; background: #222; color: #fff;" title="Playback speed ">
               <option value="0.5">0.5x</option>
               <option value="0.75">0.75x</option>
               <option value="1">1x</option>
@@ -138,11 +121,13 @@
               <option value="2">2x</option>
             </select>
 
+            <!-- Some Extra Controls (Restart, Picture-in-Picture, FullScreen) -->
             <div style="margin-left: 6px; display: flex; gap: 6px">
+              <!-- Restart button -->
               <button id="stop" class="btn" title="Go back to start">⏹</button>
-              <button id="pip" class="btn" title="Picture-in-Picture">
-                PIP
-              </button>
+              <!-- Picture-In-Picture button -->
+              <button id="pip" class="btn" title="Picture-in-Picture">Pic-In-Pic</button>
+              <!-- Full-Screen button -->
               <button id="fs" class="btn" title="Fullscreen (F)">⛶</button>
             </div>
           </div>
@@ -153,6 +138,7 @@
     <!-- Hidden file inputs -->
     <input id="fileMain" type="file" accept="video/*" style="display: none" />
     <input id="fileMore" type="file" accept="video/*" style="display: none" />
+
     <script src="script.js"></script>
   </body>
 </html>
