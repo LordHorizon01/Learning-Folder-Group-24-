@@ -3,12 +3,6 @@
       const modalMessage = document.getElementById("modalMessage");
       const modalButtons = document.getElementById("modalButtons");
 
-      /**
-       * Displays a simple OK message dialog
-       * @param {string} message - Text to display
-       * @returns {Promise<void>} Resolves when OK is clicked
-       */
-
       // Displays a dialogue box , showing message that files other than videos cannot be uploaded
       function showMessageBox(message) {
         return new Promise((resolve) => {
@@ -23,14 +17,6 @@
           };
         });
       }
-
-      /**
-       * Displays confirmation dialog with custom buttons
-       * @param {string} message - Confirmation text
-       * @param {string} [confirmText="Confirm"] - Confirm button text
-       * @param {string} [cancelText="Cancel"] - Cancel button text
-       * @returns {Promise<boolean>} true if confirmed, false if cancelled
-       */
 
       /*Displays a dialogue box with message to delete video user wants to
        delete or deleting all videos from Saved videos list and along two buttons Confirm and Cancel*/
@@ -62,11 +48,8 @@
       const STORE = "videos";
       let db;
 
-      /**
-       * Initializes IndexedDB database and creates video store
-       * @returns {Promise<IDBDatabase>} Database connection
-       */
-      // Open DB and create store with 'name' as keyPath
+     
+      // Opening DB and creating store with 'name' as keyPath
       function openDB() {
         return new Promise((resolve, reject) => {
           const request = indexedDB.open(DB_NAME, 2);
@@ -87,19 +70,19 @@
       // Save video to IndexedDB
       async function putVideo(file) {
         return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE, "readwrite");
-          const store = tx.objectStore(STORE);
+          const tx = db.transaction(STORE, "readwrite");  //Opens a transaction on Object Store with read/write access
+          const store = tx.objectStore(STORE);  //Gets a reference to the object storewhere the videos are kept.
 
           const rec = {
             name: file.name, // <--- key is name
-            blob: file,
-            created: Date.now(),
-            lastPosition: 0,
-            playbackState: "paused",
-            lastUpdated: Date.now(),
+            blob: file,  //the actual video file stored as a binary blob
+            created: Date.now(),  //timestamp ehen the video was first saved
+            lastPosition: 0, //playback postion which starts from 0
+            playbackState: "paused",  //initial state when saved
+            lastUpdated: Date.now(),  //timestamp for the most recent update
           };
 
-          store.put(rec); // put will replace if name exists
+          store.put(rec); // puts record into the store and will replace if name exists if record with samename exists
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
         });
@@ -115,13 +98,11 @@
           request.onerror = () => reject(request.error);
         });
       }
-      /**
-       * Retrieves all videos from IndexedDB
-       * @returns {Promise<Array>} Array of video records
-       */
+    
+      //Retrieving video records from Indexed DB 
       function getAllVideos() {
         return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE, "readonly");
+          const tx = db.transaction(STORE, "readonly"); //Opens a transaction on object store in readonly mode
           const store = tx.objectStore(STORE);
           const request = store.getAll(); // fetch all records
           request.onsuccess = () => resolve(request.result || []);
