@@ -298,7 +298,7 @@
        */
       function renderPlaylist() {
         playlistEl.innerHTML = "";
-        order.forEach((name) => {
+        order.forEach((name) => {   
           const row = document.createElement("div");
           row.className = "pl-item";
           if (name === order[current]) row.classList.add("playing");
@@ -899,9 +899,7 @@
       // Auto-hide player controls on inactivity
       let hideTimer = null;
 
-      /**
-       * Shows player controls and starts auto-hide timer
-       */
+      //Shows player controls and starts auto-hide timer
       function showControls() {
         controls.style.opacity = 1;
         controls.style.pointerEvents = "auto";
